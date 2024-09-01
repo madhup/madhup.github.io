@@ -69,7 +69,7 @@ with demo:
             )
         with gr.Column():
             live_data_ptg_txt = gr.Slider(
-                label="Frequently Accessed Data (%)",
+                label="Frequently Accessed (Hot) Data (%)",
                 step=1,
                 value=1,
                 minimum=0,

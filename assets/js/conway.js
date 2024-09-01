@@ -170,7 +170,12 @@ class Game {
 }
 
 const canvas = document.getElementById("game-board")
-
+// canvas.style.width = '100%';
+// canvas.style.height = '100%';
+// canvas.width = canvas.offsetWidth;
+// canvas.height = canvas.offsetHeight;
 const game = new Game(canvas)
 
 game.initialize()
+
+// canvas.height = canvas.width / (canvas.clientWidth / canvas.clientHeight);

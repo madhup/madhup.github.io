@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integral Life Architecture</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Custom Config for Dark Theme Colors -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            950: '#020617',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'zoom-in': 'zoomIn 0.2s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        zoomIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #020617; /* Slate 950 */
+            color: #e2e8f0; /* Slate 200 */
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-500 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (SVG Components) ---
+        const Icons = {
+            Brain: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>,
+            Dumbbell: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>,
+            Users: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            Globe: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>,
+            Shield: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>,
+            TrendingUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+            Sparkles: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/></svg>,
+            Share2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>,
+            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            AlertTriangle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
+            Maximize2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg>
+        };
+
+        // --- Data Constants ---
+
+        const DOMAINS = {
+            MIND: { 
+                id: 'mind', 
+                label: 'Mind', 
+                icon: Icons.Brain, 
+                colorClass: 'text-indigo-300', 
+                bgClass: 'bg-indigo-950/30', 
+                borderClass: 'border-indigo-800', 
+                hoverBorder: 'group-hover:border-indigo-500',
+                glow: 'group-hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]',
+                desc: 'Interior-Individual: Subjective consciousness & interpretation.' 
+            },
+            BODY: { 
+                id: 'body', 
+                label: 'Body & Assets', 
+                icon: Icons.Dumbbell, 
+                colorClass: 'text-emerald-300', 
+                bgClass: 'bg-emerald-950/30', 
+                borderClass: 'border-emerald-800', 
+                hoverBorder: 'group-hover:border-emerald-500',
+                glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+                desc: 'Exterior-Individual: Objective measurables, biology, & finance.' 
+            },
+            CULTURE: { 
+                id: 'culture', 
+                label: 'Culture', 
+                icon: Icons.Users, 
+                colorClass: 'text-rose-300', 
+                bgClass: 'bg-rose-950/30', 
+                borderClass: 'border-rose-800', 
+                hoverBorder: 'group-hover:border-rose-500',
+                glow: 'group-hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]',
+                desc: 'Interior-Collective: Relationships, shared meaning, & intimacy.' 
+            },
+            SYSTEM: { 
+                id: 'system', 
+                label: 'System', 
+                icon: Icons.Globe, 
+                colorClass: 'text-sky-300', 
+                bgClass: 'bg-sky-950/30', 
+                borderClass: 'border-sky-800', 
+                hoverBorder: 'group-hover:border-sky-500',
+                glow: 'group-hover:shadow-[0_0_20px_rgba(14,165,233,0.15)]',
+                desc: 'Exterior-Collective: Structures, environments, & rules.' 
+            }
+        };
+
+        const VECTORS = {
+            SUSTAIN: { id: 'sustain', label: 'Sustain', icon: Icons.Shield, desc: 'Entropy Reduction: Maintaining stability.' },
+            OPTIMIZE: { id: 'optimize', label: 'Optimize', icon: Icons.TrendingUp, desc: 'Capacity Building: Increasing power & complexity.' },
+            EXPERIENCE: { id: 'experience', label: 'Experience', icon: Icons.Sparkles, desc: 'Flow & Utilization: Subjective enjoyment.' },
+            CONTRIBUTE: { id: 'contribute', label: 'Contribute', icon: Icons.Share2, desc: 'Transcendence: Exporting order to external systems.' }
+        };
+
+        const ZONES = [
+            // --- MIND ---
+            { id: 'mind-sustain', domain: 'mind', vector: 'sustain', objective: 'Mental Hygiene', shortDesc: 'Maintaining a functional psychological baseline; preventing cognitive or emotional degradation.', examples: ['Daily mindfulness (10m)', 'Trauma therapy', 'Sleep hygiene protocols'], nonExamples: ['Learning a new philosophy (Optimize)', 'Watching a movie for fun (Experience)'], failureStates: ['Burnout', 'Depression', 'Cognitive Fog'] },
+            { id: 'mind-optimize', domain: 'mind', vector: 'optimize', objective: 'Cognitive Enhancement', shortDesc: 'Increasing mental capacity, resilience, and the complexity of mental models.', examples: ["Learning Bayes' Theorem", 'Memory palace training', 'Stoic visualization drills'], nonExamples: ['Reading fiction for pleasure (Experience)', 'Resting (Sustain)'], failureStates: ['Intellectual Stagnation', 'Dogmatism', 'Fixed Mindset'] },
+            { id: 'mind-experience', domain: 'mind', vector: 'experience', objective: 'Flow & Joy', shortDesc: 'Utilizing the mind for the pure subjective pleasure of thinking, imagining, or being.', examples: ['Reading fiction', 'Daydreaming', 'Listening to music', 'Appreciation of art'], nonExamples: ['Studying art history for a degree (Optimize)', 'Meditation for stress relief (Sustain)'], failureStates: ['Anhedonia', 'Boredom'] },
+            { id: 'mind-contribute', domain: 'mind', vector: 'contribute', objective: 'Wisdom Sharing', shortDesc: 'Exporting internal wisdom, perspective, or spiritual states to others.', examples: ['Mentoring (sharing perspective)', 'Writing a philosophy blog', 'Teaching concepts'], nonExamples: ['Networking (Culture-Optimize)', 'Donating money (Body-Contribute)'], failureStates: ['The "Hermit" Trap', 'Arrogance'] },
+            // --- BODY ---
+            { id: 'body-sustain', domain: 'body', vector: 'sustain', objective: 'Bio-Maintenance', shortDesc: 'Preventing physical death, illness, bankruptcy, and resource depletion.', examples: ['Annual checkups', 'Paying rent/bills', 'Grocery shopping', 'Basic zone 2 cardio'], nonExamples: ['Training for a marathon (Optimize)', 'Investing in stocks (Optimize)'], failureStates: ['Chronic Disease', 'Bankruptcy', 'Homelessness'] },
+            { id: 'body-optimize', domain: 'body', vector: 'optimize', objective: 'Capacity Building', shortDesc: 'Increasing physical strength, financial optionality, and hard skills.', examples: ['Hypertrophy training', 'Diversifying investment portfolio', 'Obtaining certifications'], nonExamples: ['Taking a nap (Sustain)', 'Buying a luxury car (Experience)'], failureStates: ['Frailty', 'Poverty', 'Skill obsolescence'] },
+            { id: 'body-experience', domain: 'body', vector: 'experience', objective: 'Sensory Engagement', shortDesc: 'Using the body and assets to generate sensory pleasure and adrenaline.', examples: ['Fine dining', 'Spa treatments', 'Adventure sports', 'Sexual exploration'], nonExamples: ['Eating for nutrition (Sustain)', 'Competitive sports (Optimize/Contribute)'], failureStates: ['Asceticism', 'Sensory Numbness', 'Hoarding'] },
+            { id: 'body-contribute', domain: 'body', vector: 'contribute', objective: 'Resource Deployment', shortDesc: 'Using physical strength or financial power to aid others/systems.', examples: ['Angel investing', 'Manual labor volunteering', 'Donating to charity'], nonExamples: ['Teaching a skill (Mind-Contribute)', 'Lending money with interest (Optimize)'], failureStates: ['Greed', 'Miserliness', 'Wasted Potential'] },
+            // --- CULTURE ---
+            { id: 'culture-sustain', domain: 'culture', vector: 'sustain', objective: 'Relational Maintenance', shortDesc: 'Preventing the decay of existing bonds; "keeping in touch."', examples: ['Weekly call to parents', 'Remembering birthdays', 'Conflict resolution', 'Family dinner'], nonExamples: ['Networking for career (System-Optimize)', 'Hosting a gala (Contribute)'], failureStates: ['Estrangement', 'Divorce', 'Loneliness'] },
+            { id: 'culture-optimize', domain: 'culture', vector: 'optimize', objective: 'Deepening Bonds', shortDesc: 'Improving the quality and depth of connection and communication skills.', examples: ['Marriage counseling', 'Learning Non-Violent Communication', 'Joining a Mastermind'], nonExamples: ['Hanging out casually (Experience)', 'Meeting new people (System-Optimize)'], failureStates: ['Shallow Relationships', 'Transactional Friendships'] },
+            { id: 'culture-experience', domain: 'culture', vector: 'experience', objective: 'Communion', shortDesc: 'The pure joy of being together; shared presence and play.', examples: ['Deep conversation over coffee', 'Playing team sports for fun', 'Intimacy/Cuddling', 'Parties'], nonExamples: ['Networking events (System-Optimize)', 'Family therapy (Sustain/Optimize)'], failureStates: ['Isolation', 'Social Anxiety', 'All work no play'] },
+            { id: 'culture-contribute', domain: 'culture', vector: 'contribute', objective: 'Leadership & Care', shortDesc: 'Improving the emotional or cultural state of a group; holding space.', examples: ['Leading a support group', 'Organizing a reunion', 'Emotional mentorship', 'Peacekeeping'], nonExamples: ['Managing a team project (System-Contribute)', 'Giving money to a friend (Body-Contribute)'], failureStates: ['Social Parasitism', 'Passivity'] },
+            // --- SYSTEM ---
+            { id: 'system-sustain', domain: 'system', vector: 'sustain', objective: 'Civic Compliance', shortDesc: 'Staying compliant with "rules of the game" and maintaining physical habitats.', examples: ['Filing taxes', 'Renewing licenses', 'Home cleaning/repairs', 'Recycling'], nonExamples: ['Home renovation (Optimize)', 'Tax avoidance/optimization (Optimize)'], failureStates: ['Legal Trouble (Jail/Fines)', 'Living in Squalor'] },
+            { id: 'system-optimize', domain: 'system', vector: 'optimize', objective: 'Environmental Design', shortDesc: 'Designing better systems/habitats for efficiency and career advancement.', examples: ['Interior design', 'Career promotion (Title change)', 'Moving to a better city', 'GTD setup'], nonExamples: ['Doing your daily job (Sustain/Contribute)', 'Decorating for a party (Culture-Experience)'], failureStates: ['Career Stagnation', 'Clutter', 'Inefficiency'] },
+            { id: 'system-experience', domain: 'system', vector: 'experience', objective: 'Exploration', shortDesc: 'Interacting with the world\'s systems and places as an observer/explorer.', examples: ['World travel (Tourism)', 'Visiting museums', 'Exploring new cities', 'Architecture tours'], nonExamples: ['Business travel (Optimize)', 'Building a house (Optimize)'], failureStates: ['Parochialism', 'Boredom', 'Agoraphobia'] },
+            { id: 'system-contribute', domain: 'system', vector: 'contribute', objective: 'Systemic Reform', shortDesc: 'Changing the rules/structures of the system for the collective benefit.', examples: ['Political activism', 'Starting a Non-Profit', 'Open Source coding', 'Policy writing'], nonExamples: ['Voting (System-Sustain)', 'Complaining about politics (Mind-Experience)'], failureStates: ['Cynicism', 'Apathy', 'Cog in the machine'] }
+        ];
+
+        // --- Components ---
+
+        const DetailModal = ({ zone, onClose }) => {
+            if (!zone) return null;
+
+            const domainConfig = DOMAINS[zone.domain.toUpperCase()];
+            const vectorConfig = VECTORS[zone.vector.toUpperCase()];
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all animate-fade-in" onClick={onClose}>
+                    <div 
+                        className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-zoom-in relative"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Glowing Background Effect */}
+                        <div className={`absolute top-0 left-0 right-0 h-32 opacity-20 bg-gradient-to-b ${domainConfig.colorClass.replace('text-', 'from-')} to-transparent pointer-events-none`} />
+
+                        {/* Header */}
+                        <div className="p-6 border-b border-slate-800 relative z-10 flex justify-between items-start">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border ${domainConfig.colorClass} border-opacity-30 bg-opacity-10 bg-white`}>
+                                        {domainConfig.label}
+                                    </span>
+                                    <span className="text-slate-600">•</span>
+                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                                        {vectorConfig.label}
+                                    </span>
+                                </div>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">{zone.objective}</h2>
+                            </div>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white">
+                                <Icons.X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-8 relative z-10">
+                            
+                            <p className="text-lg text-slate-300 leading-relaxed font-light">
+                                {zone.shortDesc}
+                            </p>
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {/* Examples */}
+                                <div className="bg-slate-950/50 rounded-xl p-4 border border-emerald-900/50 hover:border-emerald-500/30 transition-colors">
+                                    <h3 className="flex items-center gap-2 text-emerald-400 font-bold mb-3 text-sm uppercase tracking-wider">
+                                        <Icons.CheckCircle size={16} />
+                                        Examples
+                                    </h3>
+                                    <ul className="space-y-3">
+                                        {zone.examples.map((ex, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                                                <span className="mt-1.5 w-1 h-1 bg-emerald-500 rounded-full shrink-0 shadow-[0_0_5px_rgba(16,185,129,0.8)]"/>
+                                                {ex}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Non-Examples */}
+                                <div className="bg-slate-950/50 rounded-xl p-4 border border-amber-900/50 hover:border-amber-500/30 transition-colors">
+                                    <h3 className="flex items-center gap-2 text-amber-400 font-bold mb-3 text-sm uppercase tracking-wider">
+                                        <Icons.Info size={16} />
+                                        Distinctions
+                                    </h3>
+                                    <ul className="space-y-3">
+                                        {zone.nonExamples.map((ex, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-slate-400 text-sm">
+                                                <span className="mt-1.5 w-1 h-1 bg-amber-500 rounded-full shrink-0 shadow-[0_0_5px_rgba(245,158,11,0.8)]"/>
+                                                {ex}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Failure States */}
+                            <div className="bg-red-950/20 rounded-xl p-4 border border-red-900/30">
+                                <h3 className="flex items-center gap-2 text-red-400 font-bold mb-3 text-sm uppercase tracking-wider">
+                                    <Icons.AlertTriangle size={16} />
+                                    Failure States
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {zone.failureStates.map((state, i) => (
+                                        <span key={i} className="px-3 py-1 bg-red-950/40 border border-red-900/50 rounded text-red-300 text-xs font-medium shadow-sm">
+                                            {state}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 bg-slate-950 border-t border-slate-800 text-center text-[10px] text-slate-600 uppercase tracking-widest">
+                            Press ESC to close
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Header = () => (
+            <header className="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 bg-opacity-90 backdrop-blur">
+                <div className="max-w-7xl mx-auto px-4 py-5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+                                Integral Life <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Architecture</span>
+                            </h1>
+                            <p className="text-slate-400 text-xs md:text-sm mt-1 font-mono uppercase tracking-wide">A Unified Framework for Teleological Design</p>
+                        </div>
+                        <div className="hidden md:flex gap-6 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span> Mind
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Body
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> Culture
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span> System
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+        );
+
+        const Footer = () => (
+            <footer className="bg-slate-950 border-t border-slate-800 py-12 mt-12">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <p className="text-slate-500 mb-2 font-medium">The Architectonics of Being by Madhup Sukoon</p>
+                    <p className="text-slate-600 text-xs">Synthesized from Thermodynamics, Max-Neef's Axiology, and Integral Theory.</p>
+                </div>
+            </footer>
+        );
+
+        const App = () => {
+            const [selectedZone, setSelectedZone] = useState(null);
+            const [hoveredDomain, setHoveredDomain] = useState(null);
+            const [hoveredVector, setHoveredVector] = useState(null);
+
+            useEffect(() => {
+                const handleEsc = (e) => {
+                    if (e.key === 'Escape') setSelectedZone(null);
+                };
+                window.addEventListener('keydown', handleEsc);
+                return () => window.removeEventListener('keydown', handleEsc);
+            }, []);
+
+            const getCellClasses = (zone) => {
+                const isDomainHovered = hoveredDomain === zone.domain;
+                const isVectorHovered = hoveredVector === zone.vector;
+                const isInactive = (hoveredDomain && !isDomainHovered) || (hoveredVector && !isVectorHovered);
+                
+                const domainConfig = DOMAINS[zone.domain.toUpperCase()];
+
+                const baseClasses = `
+                    relative p-4 h-40 md:h-48 rounded-xl border transition-all duration-300 cursor-pointer 
+                    flex flex-col justify-between group overflow-hidden
+                `;
+                
+                if (isInactive) {
+                    return `${baseClasses} opacity-20 scale-95 grayscale border-slate-800 bg-slate-900`;
+                }
+
+                return `${baseClasses} 
+                    ${domainConfig.bgClass} 
+                    ${domainConfig.borderClass} 
+                    ${domainConfig.hoverBorder} 
+                    ${domainConfig.glow}
+                    hover:-translate-y-1 hover:shadow-2xl
+                `;
+            };
+
+            return (
+                <div className="min-h-screen font-sans">
+                    <Header />
+
+                    <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
+                        
+                        {/* Intro Context */}
+                        <div className="mb-10 p-6 bg-slate-900/50 border border-slate-800 rounded-2xl flex gap-4 items-start">
+                            <Icons.Info className="text-indigo-400 shrink-0 mt-1" />
+                            <div>
+                                <h3 className="font-bold text-slate-200 mb-1">Matrix Navigation</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    This matrix maps <strong className="text-indigo-300">Domains of Reality</strong> (Rows) against <strong className="text-indigo-300">Vectors of Operation</strong> (Columns). 
+                                    Hover over headers to isolate energy flows. Click any zone to decrypt its architecture.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* The Matrix Container */}
+                        <div className="overflow-x-auto pb-4 scroll-smooth">
+                            <div className="min-w-[900px]">
+                                
+                                {/* Column Headers (Vectors) */}
+                                <div className="grid grid-cols-[140px_1fr_1fr_1fr_1fr] gap-4 mb-4">
+                                    <div className="flex items-end justify-end p-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-right leading-loose">
+                                        Domains <br/> x <br/> Vectors
+                                    </div>
+                                    {Object.values(VECTORS).map(vector => (
+                                        <div 
+                                            key={vector.id}
+                                            className={`text-center p-3 rounded-lg transition-all duration-300 cursor-help border border-transparent
+                                                ${hoveredVector === vector.id ? 'bg-slate-800 border-slate-700 shadow-lg scale-105' : 'hover:bg-slate-900'}
+                                            `}
+                                            onMouseEnter={() => setHoveredVector(vector.id)}
+                                            onMouseLeave={() => setHoveredVector(null)}
+                                        >
+                                            <div className="flex flex-col items-center gap-2">
+                                                <vector.icon size={20} className={hoveredVector === vector.id ? 'text-white' : 'text-slate-500'} />
+                                                <div>
+                                                    <div className={`font-bold uppercase tracking-wider text-xs transition-colors ${hoveredVector === vector.id ? 'text-white' : 'text-slate-400'}`}>{vector.label}</div>
+                                                    <div className={`text-[10px] mt-1 font-medium transition-colors ${hoveredVector === vector.id ? 'text-slate-300' : 'text-slate-600'}`}>{vector.desc}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Matrix Body */}
+                                <div className="space-y-4">
+                                    {Object.values(DOMAINS).map(domain => (
+                                        <div key={domain.id} className="grid grid-cols-[140px_1fr_1fr_1fr_1fr] gap-4">
+                                            
+                                            {/* Row Header (Domain) */}
+                                            <div 
+                                                className={`flex flex-col justify-center items-end text-right p-4 rounded-lg transition-all duration-300 cursor-help border border-transparent
+                                                    ${hoveredDomain === domain.id ? 'bg-slate-800 border-slate-700 shadow-lg scale-105' : 'hover:bg-slate-900'}
+                                                `}
+                                                onMouseEnter={() => setHoveredDomain(domain.id)}
+                                                onMouseLeave={() => setHoveredDomain(null)}
+                                            >
+                                                <domain.icon size={24} className={`mb-2 transition-colors ${hoveredDomain === domain.id ? domain.colorClass : 'text-slate-600'}`} />
+                                                <div className={`font-bold uppercase tracking-wider text-xs transition-colors ${hoveredDomain === domain.id ? 'text-white' : 'text-slate-400'}`}>{domain.label}</div>
+                                                <div className={`text-[10px] mt-1 font-medium leading-tight transition-colors ${hoveredDomain === domain.id ? 'text-slate-300' : 'text-slate-600'}`}>{domain.desc}</div>
+                                            </div>
+
+                                            {/* Zones */}
+                                            {['sustain', 'optimize', 'experience', 'contribute'].map(vectorKey => {
+                                                const zone = ZONES.find(z => z.domain === domain.id && z.vector === vectorKey);
+                                                return (
+                                                    <div 
+                                                        key={zone.id}
+                                                        className={getCellClasses(zone)}
+                                                        onClick={() => setSelectedZone(zone)}
+                                                        onMouseEnter={() => {
+                                                            setHoveredDomain(domain.id);
+                                                            setHoveredVector(vectorKey);
+                                                        }}
+                                                        onMouseLeave={() => {
+                                                            setHoveredDomain(null);
+                                                            setHoveredVector(null);
+                                                        }}
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <span className={`text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-slate-950/40 text-slate-300 backdrop-blur-sm border border-white/5`}>
+                                                                {VECTORS[vectorKey.toUpperCase()].label}
+                                                            </span>
+                                                            <Icons.Maximize2 size={14} className="opacity-0 group-hover:opacity-100 transition-all duration-300 text-white transform group-hover:scale-110" />
+                                                        </div>
+                                                        
+                                                        <div className="relative z-10 mt-2">
+                                                            <h4 className={`font-bold text-lg md:text-xl leading-tight mb-2 transition-colors ${hoveredDomain === domain.id ? 'text-white' : 'text-slate-200'}`}>
+                                                                {zone.objective}
+                                                            </h4>
+                                                            <p className="text-xs md:text-sm text-slate-400 line-clamp-2 leading-relaxed group-hover:text-slate-300 transition-colors">
+                                                                {zone.shortDesc}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Hover Shine Effect */}
+                                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-gradient-to-tr from-transparent via-white to-transparent transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mobile View Hint */}
+                        <div className="block md:hidden text-center text-[10px] text-slate-600 uppercase tracking-widest mt-6 animate-pulse">
+                            Swipe horizontal to explore matrix
+                        </div>
+
+                    </main>
+
+                    <Footer />
+
+                    {/* Modal Layer */}
+                    {selectedZone && (
+                        <DetailModal zone={selectedZone} onClose={() => setSelectedZone(null)} />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

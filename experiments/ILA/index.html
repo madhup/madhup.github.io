@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Integral Life Architecture v0.1.36 | Madhup Sukoon</title>
+    <title>Integral Life Architecture v0.1.37 | Madhup Sukoon</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -321,7 +320,7 @@
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-                                Integral Life <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Architecture</span> <span className="text-slate-600 text-xl font-light">v0.1.35</span>
+                                Integral Life <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-sky-400">Architecture</span> <span className="text-slate-600 text-xl font-light">v0.1.37</span>
                             </h1>
                             <p className="text-slate-400 text-xs md:text-sm mt-1 font-mono uppercase tracking-wide">A Unified Framework for Life as a Teleological System</p>
                         </div>
@@ -334,7 +333,7 @@
             <footer className="bg-slate-950 border-t border-slate-800 py-12 mt-12 w-full px-6">
                 <div className="w-full text-center space-y-4">
                     <div className="flex flex-col items-center">
-                        <p className="text-slate-400 font-medium mb-1">Integral Life Architecture v0.1.35</p>
+                        <p className="text-slate-400 font-medium mb-1">Integral Life Architecture v0.1.37</p>
                         <p className="text-slate-500 text-xs">Authored by <span className="text-slate-300 font-semibold">Madhup Sukoon</span></p>
                     </div>
                     <p className="text-slate-600 text-xs">Synthesized from Thermodynamics, Max-Neef's Axiology, and Integral Theory.</p>
@@ -390,7 +389,9 @@
 
             const getVectorHeaderClasses = (vector) => {
                 const isHovered = hoveredVector === vector.id;
-                const baseClasses = `group/col-header relative h-24 text-center p-0 rounded-lg transition-all duration-300 cursor-help border flex flex-col items-center justify-center overflow-hidden`;
+                // CHANGED: Height from h-24 to h-32 to match Domain headers
+                // CHANGED: p-0 to p-2 to match Domain header inner padding
+                const baseClasses = `group/col-header relative h-32 text-center p-2 rounded-lg transition-all duration-300 cursor-help border flex flex-col items-center justify-center overflow-hidden`;
                 const activeClasses = isHovered ? `bg-${vector.color}-950/30 border-${vector.color}-500/50 shadow-lg scale-105 z-10` : `border-transparent hover:bg-${vector.color}-950/20`;
                 return `${baseClasses} ${activeClasses}`;
             };
@@ -606,7 +607,8 @@
                                                 onMouseLeave={() => setHoveredDomain(null)}
                                             >
                                                 <div className={`flex-1 p-2 flex flex-col items-center justify-center h-full w-full transition-transform duration-300 ${hoveredDomain === domain.id ? '-translate-y-3' : ''}`}>
-                                                    <domain.icon size={20} className={`mb-2 transition-colors ${hoveredDomain === domain.id ? `text-${domain.color}-400` : 'text-slate-600'}`} />
+                                                    {/* CHANGED: Icon size from 20 to 24 to match Vector Headers */}
+                                                    <domain.icon size={24} className={`mb-2 transition-colors ${hoveredDomain === domain.id ? `text-${domain.color}-400` : 'text-slate-600'}`} />
                                                     <div className={`font-bold uppercase tracking-wider text-xs transition-colors whitespace-normal text-center ${hoveredDomain === domain.id ? 'text-white' : 'text-slate-400'}`}>{domain.label}</div>
                                                 </div>
                                                 <div className={`absolute bottom-2 left-2 right-2 text-[9px] leading-tight text-slate-400 transition-opacity duration-300 delay-100 text-center ${hoveredDomain === domain.id ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
